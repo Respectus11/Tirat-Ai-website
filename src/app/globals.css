@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — from Tirat app.json */
+  --color-cream: #f7f6f2;
+  --color-brand: #1f7a45;
+  --color-deep: #134f2c;
+  --color-forest: #0c3520;
+  --color-night: #071f11;
+  --color-teff: #d9a441;
+  --color-teff-light: #ecc984;
+  --color-clay: #b4552d;
+  --color-mist: #e7e4da;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-ethiopic: var(--font-noto-ethiopic), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 20px 60px -20px rgb(19 79 44 / 0.25);
+  --shadow-card: 0 10px 40px -12px rgb(12 53 32 / 0.18);
+
+  --animate-float-slow: float-slow 7s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+
+  @keyframes float-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgb(31 122 69 / 0.45);
+    }
+    70% {
+      box-shadow: 0 0 0 16px rgb(31 122 69 / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgb(31 122 69 / 0);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+}
+
+/* Amharic mode: swap the whole UI to the Ethiopic typeface */
+html[data-lang="am"] body,
+html[data-lang="am"] button,
+html[data-lang="am"] input,
+html[data-lang="am"] textarea {
+  font-family: var(--font-ethiopic);
+  letter-spacing: 0;
+}
+
+::selection {
+  background-color: var(--color-teff);
+  color: var(--color-night);
+}
+
+/* Thin elegant scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-brand) 55%, white);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand);
+}
