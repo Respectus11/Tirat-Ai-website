@@ -46,56 +46,106 @@ function paint(geo: THREE.BufferGeometry, base: THREE.Color, jitter: number, rng
 
 /* ------------------------------ plant builder ----------------------------- */
 
-const STEM_COLORS = ["#8fa04a", "#a3a84e", "#7c9142"].map((c) => new THREE.Color(c));
-const GRAIN_COLORS = ["#d9a441", "#e3b45c", "#c08b32", "#ecc984"].map((c) => new THREE.Color(c));
+const UP = new THREE.Vector3(0, 1, 0);
 
-/** Builds one teff plant: several arcing stems topped by grain clusters. Base sits at y=0. */
+/**
+ * Teff variety palettes (stems, grains):
+ *   1. ripe golden field   2. "key" red-brown variety   3. "nech" pale ivory
+ */
+const PALETTES = [
+  {
+    stems: ["#96a34e", "#adab58", "#87984a"].map((c) => new THREE.Color(c)),
+    grains: ["#d9a441", "#c8892f", "#e3b45c", "#b97f2e"].map((c) => new THREE.Color(c)),
+  },
+  {
+    stems: ["#a39750", "#8c9046", "#9c9148"].map((c) => new THREE.Color(c)),
+    grains: ["#b06b2f", "#a3542a", "#c07a35", "#8f4b30"].map((c) => new THREE.Color(c)),
+  },
+  {
+    stems: ["#adb26e", "#99a45f", "#b6ba78"].map((c) => new THREE.Color(c)),
+    grains: ["#ecd9a8", "#ddc488", "#f2e4ba"].map((c) => new THREE.Color(c)),
+  },
+];
+
+/** One ellipsoid teff seed, elongated along Y then rotated to `dir`. */
+function makeSeed(size: number, dir: THREE.Vector3, color: THREE.Color, rng: () => number) {
+  const geo = new THREE.SphereGeometry(size, 4, 3);
+  geo.scale(1, 1.75, 1); // seed shape, not a ball
+  geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(UP, dir));
+  paint(geo, color, 0.08, rng);
+  return geo;
+}
+
+/** Builds one teff plant: nodding stems carrying open, feathery panicles. Base at y=0. */
 function buildTeffPlant(rng: () => number): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
-  const stemCount = 5 + Math.floor(rng() * 4); // 5–8 stems
+  const pal = PALETTES[Math.floor(rng() * PALETTES.length)];
+  const stemCount = 6 + Math.floor(rng() * 4); // 6–9 stems
 
   for (let s = 0; s < stemCount; s++) {
-    // Lean direction: mostly outward from center, small random tilt.
-    const angle = (s / stemCount) * Math.PI * 2 + rng() * 0.8;
-    const leanX = Math.cos(angle) * (0.18 + rng() * 0.35);
-    const leanZ = Math.sin(angle) * (0.18 + rng() * 0.35);
-    const height = 0.85 + rng() * 0.55;
+    const angle = (s / stemCount) * Math.PI * 2 + rng() * 0.9;
+    const leanX = Math.cos(angle);
+    const leanZ = Math.sin(angle);
+    const h = 1.05 + rng() * 0.65;
 
+    // Stem rises, arcs over, and nods — mature teff panicles droop.
     const p0 = new THREE.Vector3(0, 0, 0);
-    const p1 = new THREE.Vector3(leanX * 0.4, height * 0.55, leanZ * 0.4);
-    const p2 = new THREE.Vector3(
-      leanX + (rng() - 0.5) * 0.12,
-      height,
-      leanZ + (rng() - 0.5) * 0.12,
-    );
-    const curve = new THREE.CatmullRomCurve3([p0, p1, p2]);
+    const p1 = new THREE.Vector3(leanX * 0.16, h * 0.62, leanZ * 0.16);
+    const p2 = new THREE.Vector3(leanX * 0.42, h * 0.94, leanZ * 0.42);
+    const p3 = new THREE.Vector3(leanX * 0.66, h - (0.16 + rng() * 0.2), leanZ * 0.66);
+    const curve = new THREE.CatmullRomCurve3([p0, p1, p2, p3]);
 
-    const stem = new THREE.TubeGeometry(curve, 10, 0.008 + rng() * 0.005, 4, false);
-    paint(stem, STEM_COLORS[Math.floor(rng() * STEM_COLORS.length)], 0.06, rng);
+    const stem = new THREE.TubeGeometry(curve, 12, 0.0045 + rng() * 0.003, 3, false);
+    paint(stem, pal.stems[Math.floor(rng() * pal.stems.length)], 0.05, rng);
     parts.push(stem);
 
-    // Grain head: spheres spiraling along the top ~40% of the stem,
-    // widest near the middle of the head, tapering toward the tip.
-    const grains = 22 + Math.floor(rng() * 10);
-    for (let g = 0; g < grains; g++) {
-      const t = 0.58 + 0.42 * (g / grains);
-      const point = curve.getPointAt(Math.min(t, 1));
-      const tangent = curve.getTangentAt(Math.min(t, 1));
+    // Open panicle: fine branchlets fanning out from the upper third…
+    const branches = 4 + Math.floor(rng() * 3);
+    for (let b = 0; b < branches; b++) {
+      const t = Math.min(0.68 + (b / branches) * 0.28 + rng() * 0.02, 1);
+      const base = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t).normalize();
 
-      // Random offset perpendicular to the stem direction.
-      const side = new THREE.Vector3(rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1).normalize();
-      side.addScaledVector(tangent, -side.dot(tangent));
-      if (side.lengthSq() > 1e-6) side.normalize();
+      // Horizontal outward direction, spun around the stem tangent.
+      let side = new THREE.Vector3().crossVectors(tangent, UP);
+      if (side.lengthSq() < 1e-5) side.set(rng() - 0.5, 0, rng() - 0.5);
+      side.normalize().applyAxisAngle(tangent, (rng() - 0.5) * 2.4);
 
-      const headProgress = (t - 0.58) / 0.42; // 0 at head start, 1 at tip
-      const spread = 0.055 * Math.sin(Math.PI * Math.min(headProgress * 1.15, 1)) + 0.008;
-      point.addScaledVector(side, spread * Math.sqrt(rng()));
+      const len = 0.15 + rng() * 0.13;
+      const rise = len * (0.3 + rng() * 0.22);
+      const bp1 = base.clone().addScaledVector(side, len * 0.45).addScaledVector(UP, rise);
+      const bp2 = base
+        .clone()
+        .addScaledVector(side, len)
+        .addScaledVector(UP, rise - len * (0.34 + rng() * 0.26)); // tip droops
+      const branch = new THREE.CatmullRomCurve3([base.clone(), bp1, bp2]);
 
-      const size = 0.02 + rng() * 0.016 * (1 - headProgress * 0.55);
-      const grain = new THREE.SphereGeometry(size, 5, 4);
-      grain.translate(point.x, point.y, point.z);
-      paint(grain, GRAIN_COLORS[Math.floor(rng() * GRAIN_COLORS.length)], 0.07, rng);
-      parts.push(grain);
+      const twig = new THREE.TubeGeometry(branch, 6, 0.0022 + rng() * 0.0014, 3, false);
+      paint(twig, pal.stems[Math.floor(rng() * pal.stems.length)], 0.05, rng);
+      parts.push(twig);
+
+      // …with rows of tiny elongated seeds alternating along each branchlet.
+      const grains = 5 + Math.floor(rng() * 3);
+      const btan = branch.getTangentAt(0).normalize();
+      let gSide = new THREE.Vector3().crossVectors(btan, UP);
+      if (gSide.lengthSq() < 1e-5) gSide.set(1, 0, 0);
+      gSide.normalize();
+
+      for (let g = 0; g < grains; g++) {
+        const gt = Math.min(0.2 + (g / Math.max(grains - 1, 1)) * 0.75 + rng() * 0.04, 1);
+        const pos = branch.getPointAt(gt);
+        const dir = branch.getTangentAt(gt).normalize();
+        const size = 0.011 + rng() * 0.007;
+
+        const seed = makeSeed(size, dir, pal.grains[Math.floor(rng() * pal.grains.length)], rng);
+        const flip = g % 2 === 0 ? 1 : -1;
+        seed.translate(
+          pos.x + gSide.x * size * 1.2 * flip,
+          pos.y + size * 0.4,
+          pos.z + gSide.z * size * 1.2 * flip,
+        );
+        parts.push(seed);
+      }
     }
   }
 
@@ -171,7 +221,7 @@ function Field({ count, reduceMotion }: { count: number; reduceMotion: boolean }
       // Traveling wind wave across x + per-plant phase → organic field motion.
       const wave = Math.sin(time * 1.35 + p.phase + p.x * 0.32);
       dummy.position.set(p.x, 0, p.z);
-      dummy.rotation.set(wave * 0.03 * gust, p.rotY, wave * 0.075 * gust);
+      dummy.rotation.set(wave * 0.03 * gust, p.rotY, wave * 0.085 * gust);
       dummy.scale.setScalar(p.scale);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
@@ -237,10 +287,10 @@ function Pollen({ count, reduceMotion }: { count: number; reduceMotion: boolean 
         <bufferAttribute attach="attributes-position" args={[positions.slice(), 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.05}
+        size={0.042}
         color="#ecc984"
         transparent
-        opacity={0.5}
+        opacity={0.42}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         sizeAttenuation
@@ -268,8 +318,8 @@ function Rig({ reduceMotion }: { reduceMotion: boolean }) {
     if (reduceMotion) return;
     const k = 1 - Math.pow(0.001, delta); // frame-rate independent lerp
     camera.position.x += (pointer.current.x * 0.55 - camera.position.x) * k;
-    camera.position.y += (1.35 - pointer.current.y * 0.28 - camera.position.y) * k;
-    camera.lookAt(0, 0.95, -1.5);
+    camera.position.y += (1.15 - pointer.current.y * 0.26 - camera.position.y) * k;
+    camera.lookAt(0, 0.85, -1.4);
   });
 
   return null;
@@ -286,13 +336,13 @@ export default function TeffField() {
     setIsSmall(window.innerWidth < 768);
   }, []);
 
-  const plantCount = isSmall ? 130 : 300;
-  const moteCount = isSmall ? 90 : 180;
+  const plantCount = isSmall ? 100 : 240;
+  const moteCount = isSmall ? 90 : 170;
 
   return (
     <Canvas
       dpr={[1, 1.75]}
-      camera={{ fov: 42, position: [0, 1.35, 5.2], near: 0.1, far: 60 }}
+      camera={{ fov: 41, position: [0, 1.15, 4.7], near: 0.1, far: 60 }}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       className="!absolute inset-0"
     >
