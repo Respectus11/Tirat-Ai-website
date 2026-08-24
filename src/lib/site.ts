@@ -1,5 +1,5 @@
 // Central place for launch-day values. Swap these when real links exist.
-export const CONTACT_EMAIL = "hello@tirat.ai"; // TODO: replace with your real inbox before launch
+export const CONTACT_EMAIL = "kalexkalab@gmail.com";
 export const PLAY_STORE_URL = ""; // TODO: paste Google Play link when live
 export const APP_STORE_URL = ""; // TODO: paste App Store link when live
 
