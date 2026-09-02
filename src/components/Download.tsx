@@ -64,23 +64,27 @@ export default function Download() {
                 </span>
               </>
             );
+            // Use a real <a> when the store link is live, otherwise a <button>
+            // so screen readers don't announce a dead link.
             return (
               <Reveal key={label} delay={i * 0.12}>
                 <div className="relative">
-                  <a
-                    href={live ? url : undefined}
-                    aria-disabled={!live}
-                    onClick={(e) => {
-                      if (!live) e.preventDefault();
-                    }}
-                    className={`flex items-center gap-4 rounded-2xl border px-7 py-4 transition-all ${
-                      live
-                        ? "border-teff/60 bg-teff text-night hover:-translate-y-0.5 hover:bg-teff-light"
-                        : "cursor-not-allowed border-white/15 bg-white/[0.06] opacity-80"
-                    }`}
-                  >
-                    {inner}
-                  </a>
+                  {live ? (
+                    <a
+                      href={url}
+                      className="flex items-center gap-4 rounded-2xl border border-teff/60 bg-teff px-7 py-4 transition-all hover:-translate-y-0.5 hover:bg-teff-light"
+                    >
+                      {inner}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="flex cursor-not-allowed items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.06] px-7 py-4 opacity-80 transition-all"
+                    >
+                      {inner}
+                    </button>
+                  )}
                   {!live && (
                     <span className="absolute -right-3 -top-3 rotate-6 rounded-full bg-clay px-3 py-1 text-[0.65rem] font-black uppercase tracking-wide text-cream shadow-card">
                       {t.download.comingSoon}
