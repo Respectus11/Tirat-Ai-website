@@ -213,6 +213,10 @@ export const en = {
     rights: "All rights reserved.",
     madeIn: "Made with care for Ethiopia",
   },
+
+  ui: {
+    languageToggle: "Language / ቋንቋ",
+  },
 };
 
 export type Dict = typeof en;

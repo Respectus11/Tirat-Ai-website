@@ -215,4 +215,8 @@ export const am: Dict = {
     rights: "መብቱ በህግ የተጠበቀ ነው።",
     madeIn: "ለኢትዮጵያ በፍቅር የተሠራ",
   },
+
+  ui: {
+    languageToggle: "Language / ቋንቋ",
+  },
 };

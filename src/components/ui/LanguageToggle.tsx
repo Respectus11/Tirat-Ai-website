@@ -8,12 +8,12 @@ const OPTIONS: { key: Language; label: string }[] = [
 ];
 
 export default function LanguageToggle({ dark = false }: { dark?: boolean }) {
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
 
   return (
     <div
       role="group"
-      aria-label="Language / ቋንቋ"
+      aria-label={t.ui.languageToggle}
       className={`flex items-center rounded-full border p-1 transition-colors ${
         dark
           ? "border-white/25 bg-white/10 backdrop-blur-sm"
