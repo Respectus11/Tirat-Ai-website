@@ -15,11 +15,15 @@ export function contactMailto(message: string, name: string, email: string): str
   return mailtoUrl(subject, body);
 }
 
+// Navigation section anchors used by Navbar and Footer.
+// The "partners" anchor links to the Partners section — without it,
+// that section is unreachable from the site navigation.
 export const NAV_ANCHORS = [
   "problem",
   "how",
   "features",
   "download",
+  "partners",
   "faq",
   "contact",
 ] as const;

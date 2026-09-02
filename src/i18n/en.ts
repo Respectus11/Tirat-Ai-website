@@ -7,6 +7,7 @@ export const en = {
     how: "How It Works",
     features: "Features",
     download: "Download",
+    partners: "Partners",
     faq: "FAQ",
     contact: "Contact",
   },

@@ -9,6 +9,7 @@ export const am: Dict = {
     how: "\u12a5\u1295\u12f4\u1275 \u12ed\u1230\u122b\u120d",
     features: "\u1263\u1215\u122d\u12eb\u1275",
     download: "\u12a0\u12cd\u122d\u12f5",
+    partners: "\u12a0\u12c1\u1293\u1295",
     faq: "\u1325\u12eb\u1244\u12ce\u127d",
     contact: "\u12eb\u130d\u1299\u1295",
   },
