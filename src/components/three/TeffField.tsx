@@ -229,7 +229,15 @@ function Field({ count, reduceMotion }: { count: number; reduceMotion: boolean }
     mesh.instanceMatrix.needsUpdate = true;
   });
 
-  useEffect(() => () => material.dispose(), [material]);
+  // Clean up GPU resources (material + merged geometry) on unmount.
+  // Without this, React 19 strict-mode double-mounts in dev can leak
+  // hundreds of BufferGeometries into the WebGL context.
+  useEffect(() => {
+    return () => {
+      material.dispose();
+      geometry.dispose();
+    };
+  }, [material, geometry]);
 
   return (
     <instancedMesh
