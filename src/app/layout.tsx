@@ -47,6 +47,19 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-lang="en" suppressHydrationWarning>
+      <head>
+        {/*
+          Inline script runs before React hydrates to read the saved
+          language preference from localStorage and apply it to the
+          <html> element immediately. This prevents the flash of English
+          content when an Amharic-speaking user revisits the site.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem('tirat-lang');if(l==='am'||l==='en'){document.documentElement.lang=l;document.documentElement.dataset.lang=l;}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className={`${jakarta.variable} ${ethiopic.variable} bg-cream text-forest antialiased`}
       >
